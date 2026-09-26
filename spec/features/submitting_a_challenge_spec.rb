@@ -10,6 +10,8 @@ feature "Submitting a challenge" do
   scenario "with missing fields" do
     visit root_path
 
+    click_link "Sign in"
+
     click_link "Sign in with Twitter"
 
     click_link "Submit challenge"
@@ -26,6 +28,8 @@ feature "Submitting a challenge" do
   scenario "with properly filled out fields" do
     visit root_path
 
+    click_link "Sign in"
+
     click_link "Sign in with Twitter"
 
     click_link "Submit challenge"
@@ -37,7 +41,7 @@ feature "Submitting a challenge" do
     attach_file("challenge_diff", path_for_data_file("diff.txt"))
     click_button "Create challenge"
 
-    expect(current_path).to eq(challenge_path(Challenge.first))
+    expect(current_path).to eq(challenge_path(Challenge.first.urlkey))
     expect(Challenge.count).to eq(1)
   end
 

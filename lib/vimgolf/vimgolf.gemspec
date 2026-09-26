@@ -10,19 +10,26 @@ Gem::Specification.new do |s|
   s.email       = ["ilya@igvita.com"]
   s.homepage    = "http://github.com/igrigorik/vimgolf"
   s.summary     = "CLI client for vimgolf.com"
-  s.description = s.summary
+  s.description = "Real Vim ninjas count every keystroke - do you? Pick a challenge on vimgolf.com, fire up Vim, and show us what you got."
+  s.licenses    = ["MIT"]
 
   s.rubyforge_project = "vimgolf"
-  s.add_dependency "thor", ">= 0.14.6"
-  s.add_dependency "json_pure"
-  s.add_dependency "highline"
 
-  s.add_development_dependency "rspec"
-  s.add_development_dependency "rake"
+  s.required_ruby_version = ">= 2.0"
 
-  s.files         = `git ls-files`.split("\n")
-  s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
-  s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
+  s.add_runtime_dependency "thor", "~> 1.0", ">= 1.0.1"
+  s.add_runtime_dependency "json_pure", "~> 2.3", ">= 2.3.1"
+  s.add_runtime_dependency "highline", "~> 2.0", ">= 2.0.3"
+
+  s.add_development_dependency "rspec", "~> 3.7", ">= 3.7.0"
+  s.add_development_dependency "rake", "~> 12.3", ">= 12.3.1"
+  s.add_development_dependency "climate_control", "~> 0.2"
+  s.add_development_dependency "diff-lcs", "~> 1.4"
+  s.add_development_dependency "rexml", "= 3.1.9"
+  s.add_development_dependency "webmock", "~> 3.13"
+
+  s.files         = Dir.glob("{bin,lib}/**/*") + %w(README.md)
+  s.executables   = ["vimgolf"]
   s.require_paths = ["lib"]
 
    s.post_install_message = %{

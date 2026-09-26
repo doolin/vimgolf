@@ -1,12 +1,14 @@
 class EntryController < ApplicationController
 
-  before_filter :login, :only => [:comment]
-  before_filter :load_entry, :only => [:comment, :destroy]
+  before_action :login, :only => [:comment]
+  before_action :load_entry, :only => [:comment, :destroy]
 
   def comment
     if @challenge.participator?(current_user) && @entry && params.fetch(:comment, {})[:text].present?
-      @entry.comments.push Comment.new(:comment => params[:comment][:text], :nickname => current_user.nickname)
-      @challenge.save
+      @entry.comments.create(
+        comment: params[:comment][:text],
+        user: current_user
+      )
     end
 
     redirect_to challenge_path(params[:challenge])
@@ -17,13 +19,13 @@ class EntryController < ApplicationController
       @cheat = true
 
     elsif params['challenge_id'] && !params['apikey'].empty? && !params['apikey'].nil?
-      @challenge = Challenge.find(params['challenge_id']) rescue nil
+      @challenge = Challenge.find_by_urlkey(params['challenge_id']) rescue nil
       @user = User.where(key: params['apikey']).first
 
       if @challenge && @user
         @entry = Entry.new(
-                  :script => params[:entry],
-                  :score => VimGolf::Keylog.new(params[:entry]).score
+                  script: params[:entry],
+                  score: VimGolf::Keylog.new(params[:entry]).score
                  )
         @entry.created_at = Time.now.utc
         @entry.user = @user
@@ -33,7 +35,7 @@ class EntryController < ApplicationController
     end
 
     respond_to do |format|
-      if !@cheat && @user && @challenge && @challenge.save
+      if !@cheat && @user && @challenge
         format.json { render :json => {'status' => 'ok'} }
       else
         format.json { render :json => {'status' => 'failed'}, :status => 400 }
@@ -42,9 +44,8 @@ class EntryController < ApplicationController
   end
 
   def destroy
-    if @entry && (@challenge.owner?(current_user) || @entry.owner?(current_user))
+    if @entry && (@challenge.owner?(current_user) || @entry.owned_by?(current_user))
       @entry.destroy
-      @challenge.save
     end
 
     redirect_to challenge_path(params[:challenge])
@@ -53,7 +54,7 @@ class EntryController < ApplicationController
   private
 
   def load_entry
-    @challenge = Challenge.find(params[:challenge])
+    @challenge = Challenge.find_by_urlkey(params[:challenge])
     @entry = @challenge.entries.find(params[:entry])
   rescue
     respond_to do |format|

@@ -1,6 +1,10 @@
+require_relative '../services/show_challenge'
+require_relative '../services/leaderboard'
+require_relative '../services/submissions'
+
 class ChallengesController < ApplicationController
 
-  before_filter :login, :only => [:create, :new, :destroy]
+  before_action :login, :only => [:create, :new, :destroy]
 
   def index
     redirect_to root_path
@@ -14,7 +18,7 @@ class ChallengesController < ApplicationController
   end
 
   def destroy
-    @challenge = Challenge.find(params['id'])
+    @challenge = Challenge.find_by_urlkey(params['id'])
     @challenge.destroy if @challenge.owner?(current_user)
     redirect_to root_path
   end
@@ -49,29 +53,33 @@ class ChallengesController < ApplicationController
   end
 
   def show
-    @challenge = Challenge.find(params['id']) rescue nil
-    return redirect_to root_path if @challenge.nil?
-
-    # TODO, there is a better way to do this...
-    users = @challenge.entries.map {|e| e.user_id }.uniq
-    @users = User.where(:_id.in => users).inject({}) {|h,u| h[u.id] = u; h}
+    # Limit to id to avoid downloading uneccessary entries
+    challenge_id = params['id']
+    challenge = Challenge.find_by_urlkey(challenge_id) rescue nil
+    return redirect_to root_path if challenge.nil?
 
     respond_to do |format|
-      format.json {
-        render :json => {
-          'in' => {
-            'data' => @challenge.input,
-            'type' => @challenge.input_type
-          },
-          'out' => {
-            'data' => @challenge.output,
-            'type' => @challenge.output_type
-          },
-          'client' => Vimgolf::VERSION
-      }}
+      format.json { render :json => json_show(challenge_id) }
 
-      format.html
+      format.html {
+        @show_challenge = challenge
+        @submissions = Submissions.new(current_user, challenge.urlkey, params['submissions_page'])
+        @leaderboard = Leaderboard.new(challenge, params['leaderboard_page'])
+      }
     end
+  end
+
+  def user
+    # Limit to id to avoid downloading uneccessary entries
+    challenge_id = params['id']
+    challenge = Challenge.find_by_urlkey(challenge_id) rescue nil
+    return redirect_to root_path if challenge.nil?
+
+    player = User.where(nickname: params[:username]).first rescue nil
+    return redirect_to root_path if player.nil?
+
+    @show_challenge = ShowChallenge.new(challenge.urlkey)
+    @submissions = SubmissionsPerUser.new(current_user, challenge.urlkey, player)
   end
 
   private
@@ -79,4 +87,22 @@ class ChallengesController < ApplicationController
   def challenge_params
     params.require(:challenge).permit!
   end
+
+  def json_show(challenge_id)
+    challenge = Challenge
+      .find_by_urlkey(challenge_id)
+
+    {
+      'in' => {
+        'data' => challenge.input,
+        'type' => challenge.input_type
+      },
+      'out' => {
+        'data' => challenge.output,
+        'type' => challenge.output_type
+      },
+      'client' => Vimgolf::VERSION
+    }
+  end
+
 end

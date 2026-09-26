@@ -1,19 +1,6 @@
-require 'digest/md5'
+require 'securerandom'
 
-class User
-  include Mongoid::Document
-  include Mongoid::Timestamps
-
-  field :provider, type: String
-  field :uid, type: String
-
-  field :nickname, type: String
-  field :name, type: String
-  field :location, type: String
-  field :image, type: String
-  field :description, type: String
-  field :key, type: String
-
+class User < ActiveRecord::Base
   validates_presence_of :provider
   validates_presence_of :nickname
   validates_presence_of :name
@@ -21,24 +8,35 @@ class User
   validates_numericality_of :uid
 
   has_many :challenges, dependent: :destroy
+  has_many :entries, dependent: :destroy
+  has_many :comments, dependent: :destroy
 
-  before_create :create_key
-  before_destroy :destroy_entries
+  attribute :key, :string, default: -> { SecureRandom.hex }
 
   def admin?
     ADMINS.include? nickname.downcase
   end
 
-  protected
-    def create_key
-      self.key = Digest::MD5.hexdigest(id.to_s)
-    end
-
-    def destroy_entries
-      Challenge.
-        all.
-        flat_map(&:entries).
-        select { |entry| entry.user_id == id }.
-        each(&:destroy)
-    end
+  def player_best_scores
+    Entry.from(
+      Entry.from(
+        Entry
+        .where(challenge_id: User.find(id).entries.select(:challenge_id))
+        .select(
+          '*',
+          'row_number() OVER (PARTITION BY challenge_id, user_id ORDER BY score, created_at) AS user_ranked_entry'
+        ),
+        :entries
+      )
+        .where(user_ranked_entry: 1)
+        .select(
+          '*',
+          'row_number() OVER (PARTITION BY challenge_id ORDER BY score, created_at) AS position'
+        ),
+      :entries
+    )
+         .where(user_id: id)
+         .select('*', 'position')
+         .order('challenge_id DESC')
+  end
 end

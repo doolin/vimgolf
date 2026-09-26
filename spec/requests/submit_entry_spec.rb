@@ -17,9 +17,9 @@ describe "POST /entry" do
       provider: "github",
       nickname: "the science guy"
     )
-    body = { entry: "aa", challenge_id: challenge.id.to_s, apikey: user.key }.to_json
+    body = { entry: "aa", challenge_id: challenge.urlkey, apikey: user.key }.to_json
 
-    post("/entry", body, headers)
+    post("/entry", params: body, headers: headers)
 
     entries = challenge.reload.entries
     expect(response).to have_http_status(200)
@@ -40,10 +40,10 @@ describe "POST /entry" do
       output: "bb",
       diff: "aabb"
     )
-    invalid_challenge_id = BSON::ObjectId.from_string(challenge.id.to_s.reverse).to_s
+    invalid_challenge_id = challenge.urlkey.reverse
     body = { entry: "foo", challenge_id: invalid_challenge_id, apikey: "a" }.to_json
 
-    post("/entry", body, headers)
+    post("/entry", params: body, headers: headers)
 
     expect(response).to have_http_status(400)
     expect(json_response[:status]).to eq("failed")
@@ -67,7 +67,7 @@ describe "POST /entry" do
     ).key.reverse
     body = { entry: "foo", challenge_id: challenge.id, apikey: invalid_key }.to_json
 
-    post("/entry", body, headers)
+    post("/entry", params: body, headers: headers)
 
     expect(response).to have_http_status(400)
     expect(json_response[:status]).to eq("failed")
@@ -76,7 +76,7 @@ describe "POST /entry" do
   it "fails with an empty api key" do
     body = { entry: "foobar", challenge_id: 1, apikey: "" }.to_json
 
-    post("/entry", body, headers)
+    post("/entry", params: body, headers: headers)
 
     expect(response).to have_http_status(400)
     expect(json_response[:status]).to eq("failed")
@@ -85,7 +85,7 @@ describe "POST /entry" do
   it "fails with a missing challenge id" do
     body = { entry: "foobar" }.to_json
 
-    post("/entry", body, headers)
+    post("/entry", params: body, headers: headers)
 
     expect(response).to have_http_status(400)
     expect(json_response[:status]).to eq("failed")
@@ -94,7 +94,7 @@ describe "POST /entry" do
   it "fails when you're cheating" do
     body = { entry: "a" }.to_json
 
-    post("/entry", body, headers)
+    post("/entry", params: body, headers: headers)
 
     expect(response).to have_http_status(400)
     expect(json_response[:status]).to eq("failed")

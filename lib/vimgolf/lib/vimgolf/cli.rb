@@ -1,10 +1,9 @@
 module VimGolf
 
   GOLFDEBUG    = ENV['GOLFDEBUG'].to_sym rescue false
-  GOLFHOST     = ENV['GOLFHOST']     || "http://www.vimgolf.com"
+  GOLFHOST     = ENV['GOLFHOST']     || "https://www.vimgolf.com"
   GOLFSHOWDIFF = ENV['GOLFSHOWDIFF'] || 'vim -d -n'
   GOLFVIM      = ENV['GOLFVIM']      || 'vim'
-  PROXY        = ENV['http_proxy']   || ''
 
   class Error
   end
@@ -26,10 +25,32 @@ module VimGolf
   class CLI < Thor
     include Thor::Actions
 
-    def self.start(*)
+    def self.initialize_ui
+      return if @ui_initialized
       Thor::Base.shell = VimGolf::CLI::UI
       VimGolf.ui = VimGolf::CLI::UI.new
+      @ui_initialized = true
+    end
+
+    def self.reset_ui
+      return unless @ui_initialized
+      Thor::Base.shell = Thor::Shell::Color
+      VimGolf.ui = nil
+      @ui_initialized = false
+    end
+
+    def self.start(*)
+      initialize_ui
       super
+    end
+
+    desc "version", "print version of Vimgolf client"
+    long_desc <<-DESC
+    Print version of the Vimgolf client.
+    DESC
+
+    def version
+      VimGolf.ui.info "Client #{Vimgolf::VERSION}"
     end
 
     desc "setup", "configure your VimGolf credentials"
@@ -44,8 +65,9 @@ module VimGolf
     def setup
       VimGolf.ui.info "\nLet's setup your VimGolf key..."
       VimGolf.ui.warn "1) Open vimgolf.com in your browser."
-      VimGolf.ui.warn "2) Click \"Sign in with Twitter\"."
-      VimGolf.ui.warn "3) Once signed in, copy your key (black box, top right)."
+      VimGolf.ui.warn "2) Click \"Sign in\"."
+      VimGolf.ui.warn "3) Click \"Sign in with Twitter\" or \"Sign in with Github\"."
+      VimGolf.ui.warn "4) Once signed in, copy your key (black box, top right)."
 
       key = VimGolf.ui.ask "\nPaste your VimGolf key:"
 
@@ -109,7 +131,10 @@ module VimGolf
         # -u vimrc   - load vimgolf .vimrc to level the playing field
         # -U NONE    - don't load .gvimrc
         # -W logfile - keylog file (overwrites if already exists)
-        vimcmd = GOLFVIM.shellsplit + %W{-Z -n --noplugin --nofork -i NONE +0 -u #{challenge.vimrc_path} -U NONE -W #{challenge.log_path} #{challenge.work_path}}
+        vimcmd = GOLFVIM.shellsplit + %W{-Z -n --noplugin -i NONE +0 -u #{challenge.vimrc_path} -U NONE -W #{challenge.log_path} #{challenge.work_path}}
+        if GOLFVIM == "gvim"
+          vimcmd += %W{ --nofork}
+        end
         debug(vimcmd)
         system(*vimcmd) # assembled as an array, bypasses the shell
 

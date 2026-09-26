@@ -10,14 +10,15 @@ engines:
     enabled: true
     config:
       languages:
-      - ruby
-      - javascript
+        ruby:
+        javascript:
   eslint:
     enabled: true
   fixme:
     enabled: true
   rubocop:
     enabled: true
+    channel: rubocop-1-9-1
 ratings:
   paths:
   - Gemfile.lock
@@ -36,3 +37,4 @@ exclude_paths:
 - db/
 - script/
 - spec/
+- app/repositories/

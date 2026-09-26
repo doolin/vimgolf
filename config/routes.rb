@@ -1,6 +1,7 @@
-Vimgolf::Application.routes.draw do
+Rails.application.routes.draw do
+  # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 
-  match "/auth/twitter/callback",to: "sessions#create", via: [:get, :post]
+  match "/auth/:provider/callback",to: "sessions#create", via: [:get, :post]
   get "/signout", to: "sessions#destroy", as: :signout
 
   post "/entry", to: "entry#create"
@@ -8,14 +9,19 @@ Vimgolf::Application.routes.draw do
   get "/entry/:challenge/delete/:entry",to: "entry#destroy", as: :delete_entry
   post "/entry/:challenge/comment/:entry", to: "entry#comment", as: :comment_entry
 
-  resources :challenges
+  resources :challenges do
+    member do
+      get 'user/:username', to: "challenges#user", as: :user, :constraints => { :username => /[^\/]+/ }
+    end
+  end
 
+  get "/login", to: "main#oauth"
   get "/feed", to: "main#feed", defaults: {format: "rss"}
   get "/about", to: "main#about"
 
   # match "/top" => "users#top", as: :top
-  # match "/:username" => "users#show", as: :profile
-  match "*unmatched_route", to: redirect('/about', status: 302), via: [:get, :post]
+  # match "*unmatched_route", to: redirect('/about', status: 302), via: [:get, :post]
+  get "/:id/:username", to: "users#show", as: :profile, :constraints => { :username => /[^\/]+/ }
 
   root to: "main#index"
 

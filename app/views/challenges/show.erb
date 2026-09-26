@@ -1,88 +1,54 @@
-<% challenge_id(@challenge) %>
+<% challenge_id(@show_challenge) %>
 
 <div class="grid_7">
-    <h3><b><%= @challenge.title %></b></h3>
-    <p><%= @challenge.description%></p>
+    <h3><b><%= @show_challenge.title %></b></h3>
 
-    <h5>Start file</h5>
-    <pre class="prettyprint"><%= @challenge.input %></pre>
-
-    <h5>End file</h5>
-    <pre class="prettyprint"><%= @challenge.output %></pre>
-
-    <h4><a href="#" onclick="$('.diff').toggle(); return false;">View Diff</a></h4>
-    <pre class="prettyprint diff"><%= @challenge.diff %></pre>
+  <%= render :partial => "shared/challenge_description", :locals => { show_challenge: @show_challenge } %>
 
     <h3>Solutions</h3>
     <p><b>The best way to learn is to practice</b>. Below, you will find some of the solutions other golfers have entered. To unlock higher ranked solutions, submit your own entry which does as well or better than the solutions you can currently see - climb the ladder!</p>
 
     <p>Check out <a href="/about#resources"> these helpful resources</a> to improve your Vim skills... <em>Game on.</em></p>
 
-<%
-    allowed, offset = @challenge.allowed_entries(current_user)
-    offset ||= 0
-    allowed ||= []
-%>
-
 <% if !current_user %>
-    <div class="note clearfix">Unlock <b><%= offset %></b> remaining solutions by <b><%= link_to "signing in", "/auth/twitter?x_auth_access_type=read&use_authorize=true" %></b> and submitting your own entry</div>
-<% elsif !offset.zero? %>
-    <div class="note clearfix">Unlock <b><%= offset %></b> remaining solutions by submitting a higher ranked entry</div>
+    <div class="note clearfix">Unlock <b><%= @submissions.count_remaining %></b> remaining solutions by <b><%= link_to "signing in", "/auth/twitter?x_auth_access_type=read&use_authorize=true" %></b> and submitting your own entry</div>
+  <% elsif @submissions.count_remaining > 0 %>
+    <div class="note clearfix">Unlock <b><%= @submissions.count_remaining %></b> remaining solutions by submitting a higher ranked entry</div>
 <% end %>
 
-<% allowed.each do |entry| %>
-     <%=  render :partial => "shared/entry", :locals => {
-            :user => @users[entry.user_id],
-            :entry => entry,
-            :challenge => @challenge,
-            :offset => offset
-        }
-      %>
-      <% offset += 1 %>
-<% end %>
+  <%= render :partial => "shared/submissions", :locals => { submissions: @submissions } %>
+
+<%= paginate @submissions.paginated, inner_window: 20, param_name: :submissions_page %>
 
 </div>
 
 <div class="grid_5">
-    <h5>Created by: <%= @challenge.user.nickname %>
-        <span style="float:right">
-            <%= tweet_button({
-            :via => "",
-            :url => current_url,
-            :text => "awesome VimGolf challenge: #{@challenge.title} @",
-            :related => ["vim", "learnvim"],
-            :count => "horizontal"
-            }) %>
-        </span>
-    </h5>
+  <%= render :partial => "shared/challenge_credits", :locals => { show_challenge: @show_challenge } %>
 
-    <h2 style="padding-bottom:1em; border-bottom: 1px dotted;">
-        <b class="stat"><%= @users.size %></b> active golfers, <b class="stat"><%= @challenge.entries.size %></b> entries
-    </h2>
-
-    <% if @challenge.owner?(current_user) %>
+    <% if @show_challenge.owner?(current_user) %>
         <div class="error clearfix">
-            <%= button_to "Delete Challenge", @challenge, :method => :delete, :class => 'action' %>
+            <%= button_to "Delete Challenge", { :action => 'destroy', :id => @show_challenge.urlkey }, :method => :delete, :class => 'delete action' %>
         </div>
     <% end %>
 
-    <% if @challenge.entries.size.zero? %>
+    <% if @leaderboard.empty? %>
         <h5>No competitors yet.. <em>be the first!</em></h5>
 
     <% else %>
         <h5>Leaderboard <em>(lowest score wins):</em></h5>
-        <% @challenge.top_entries.each_with_index do |entry, idx| %>
-            <% user = @users[entry.user_id] %>
-
+        <% @leaderboard.each do |entry, user, position| %>
             <div class="notice clearfix">
                 <%= twitter_avatar user.nickname %>
-                <div style="float:right; text-align:center;font-size:2.4em"><b><%= entry.score %></b></div>
+                <div style="float:right; text-align:center;font-size:2.4em"><b><%= link_to entry[:score],
+                  user_challenge_path(@show_challenge.urlkey, user.nickname) %></b></div>
 
                 <h6 style="margin-bottom:0">
-                    <a class="anchor" href="#<%= entry.id %>"><b>#<%= idx+1 %></b></a> - <%= user.name %> / <%= user.nickname %>
+                    <a class="anchor" href="#<%= entry[:entry_id] %>"><b>#<%= position %></b></a> - <%= user.name %> / <%= profile_link(user) %>
                 </h6>
-                <p style="margin-bottom:0"><em><%= entry.created_at.strftime("%m/%d/%Y at %I:%M%p") %></em></p>
+                <p style="margin-bottom:0"><em><%= entry[:created_at].strftime("%m/%d/%Y at %I:%M%p") %></em></p>
             </div>
         <% end %>
+
+        <%= paginate @leaderboard.paginated, inner_window: 20, param_name: :leaderboard_page %>
     <% end %>
 </div>

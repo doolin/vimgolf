@@ -1,6 +1,6 @@
 require "spec_helper"
 
-feature "Deleting a challenege" do
+feature "Deleting a challenge" do
   include OmniAuthHelper
 
   before(:each) do
@@ -15,17 +15,20 @@ feature "Deleting a challenege" do
       image: "bar",
       provider: "twitter"
     )
-    challenge = Challenge.create!(
+    Challenge.create!(
       title: "challenge1",
       description: "a sample challenge",
       input: "aa",
+      input_type: "txt",
       output: "bb",
+      output_type: "txt",
       diff: "aabb",
       user_id: user.id
     )
 
     visit root_path
 
+    click_link "Sign in"
     click_link "Sign in with Twitter"
     click_link "challenge1"
     click_button "Delete Challenge"
@@ -41,11 +44,13 @@ feature "Deleting a challenege" do
       image: "baz",
       provider: "twitter"
     )
-    challenge = Challenge.create!(
+    Challenge.create!(
       title: "challenge1",
       description: "a sample challenge",
       input: "aa",
+      input_type: "txt",
       output: "bb",
+      output_type: "txt",
       diff: "aabb",
       user_id: user.id
     )

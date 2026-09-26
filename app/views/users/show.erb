@@ -1,35 +1,36 @@
 <div class="grid_7">
-    <h3><b>Top Entries</b></h3>
-    <% @entries.each do |entry| %>
+
+  <h3><b>Played Challenges</b></h3>
+    <% @show_profile.tried_challenges.each do |entry| %>
         <div>
-            <h5 class="challenge">
-                <%= link_to entry.challenge.title, challenge_path(entry.challenge) %> -
-                Rank: <b class="stat"><%= entry.challenge.top_entries.index(entry) + 1 %>/<%= entry.challenge.entries.size %></b>,
-                Score: <b><%= entry.score %></b>
-            </h5>
-            <p><%= entry.challenge.description %>
+            <%= render partial: "shared/challenge", locals: { challenge: entry.challenge } %>
+            <ul>
+              <li>Best score: <b><%= entry.challenge.best_score %></b></li>
+              <li>Best player score: <b><%= entry.score %></b></li>
+              <li>Position: <b>#<%= entry.position %> / <%= entry.challenge.count_uniq_users %></b></li>
+              <li>Number of attempts: <b><%= link_to entry.challenge.count_entries_by(@show_profile.player.id),
+                user_challenge_path(entry.challenge.urlkey, @show_profile.nickname) %></b></li>
+            </ul>
         </div>
     <% end %>
 
-    <% if !@contributed.empty? %>
+    <% if @show_profile.contributed.present? %>
         <h3><b>Contributed Challenges</b></h3>
-        <% @contributed.each do |c| %>
-            <%= render :partial => "shared/challenge", :locals => { :challenge => c } %>
-        <% end %>
+        <%= render partial: "shared/challenge", collection: @show_profile.contributed, as: :challenge %>
     <% end %>
 
 </div>
 
 <div class="grid_5">
-    <div class="notice clearfix">
-        <%= twitter_avatar @user.nickname %>
+  <div class="notice clearfix">
+    <%= twitter_avatar @show_profile.nickname %>
 
-        <h6 style="margin-bottom:0">
-            <b><%= @user.name %></b><br/>Twitter: <%= twitter_profile(@user.nickname) %>
-        </h6>
-        <p style="margin-bottom:0"><em><%= @user.description || @user.location %></em></p>
-    </div>
+    <h6 style="margin-bottom:0">
+      <b><%= @show_profile.name %></b><br/><%= @show_profile.provider.capitalize %>: <%= provider_profile(@show_profile) %>
+    </h6>
+    <p style="margin-bottom:0"><em><%= @show_profile.description || @show_profile.location %></em></p>
+  </div>
 
-    <h2 style="padding:0em;margin:1em 1.5em 0.5em 1.5em">entered into <b class="stat"><%= @entries.size %></b> challenges</h2>
-    <h2 style="padding:0em;margin:0.5em 1.5em">contributed <b class="stat"><%= @contributed.size %></b> challenges</h2>
+  <h2 style="padding:0em;margin:1em 1.5em 0.5em 1.5em">entered into <b class="stat"><%= @show_profile.tried_challenges.size %></b> challenges</h2>
+  <h2 style="padding:0em;margin:0.5em 1.5em">contributed <b class="stat"><%= @show_profile.contributed.size %></b> challenges</h2>
 </div>

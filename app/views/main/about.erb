@@ -1,7 +1,14 @@
 <div class="grid_7">
 
-    <h3><b>Changelog</b></h3>
+    <h3><b>Changelog</b> <a href="https://github.com/igrigorik/vimgolf/commits/master">(details)</a></h3>
     <ul>
+        <li><b>May 28, 2021</b>: shipped v0.5.0 with support for HTTPS</li>
+        <li><b>May 06, 2021</b>: site performance improvements: migrated from MongoDB Atlas to Active Record on Postgres backend (<a href="https://twitter.com/igrigorik/status/1390690636932599818">charts</a>)</li>
+        <li><b>Apr 07, 2021</b>: switched avatars to identicons, since Twitter profile pictures are no longer accessible by an easy URL (need better fix)</li>
+        <li><b>Mar 26, 2021</b>: upgraded to Rails 5.2 under Ruby 2.6, using heroku-20 platform</li>
+        <li><b>Mar 22, 2021</b>: shipped v0.4.9 with fix for &lt;fd-61&gt; phantom keystrokes (among other pending fixes)</li>
+        <li><b>Nov 20, 2020</b>: introduced a new view with access to all submissions per user for a specific challenge</li>
+        <li><b>Jul 07, 2018</b>: site performance improvements: pagination/remove jquery</li>
         <li><b>Dec 28, 2016</b>: disabled user profile pages (<a href="https://github.com/igrigorik/vimgolf/issues/150">bug</a>)</li>
         <li><b>Jan 18, 2015</b>: shipped v0.4.8 with windows bugfix</li>
         <li><b>Jan 18, 2015</b>: shipped v0.4.7 with new "local" CLI mode</li>
@@ -51,8 +58,8 @@
 
     <h3><a name="resources"><b>Resources for learning Vim</b></a></h3>
     <ul>
-        <li><%= link_to "Vim Tutorial @ linuxconfig.org", "http://www.linuxconfig.org/Vim_Tutorial", :target => :_new %></li>
-        <li><%= link_to "Vim Tutorial Videos @ derekwyatt.org", "http://www.derekwyatt.org/vim/vim-tutorial-videos/", :target => :_new %></li>
+        <li><%= link_to "Vim Tutorial @ linuxconfig.org", "https://www.linuxconfig.org/Vim_Tutorial", :target => :_new %></li>
+        <li><%= link_to "Vim Tutorial Videos @ derekwyatt.org", "http://derekwyatt.org/vim/tutorials", :target => :_new %></li>
         <li><%= link_to "VimCasts", "http://vimcasts.org", :target => :_new %></li>
     </ul>
 
@@ -64,6 +71,11 @@
     <ul>
         <li><b>Golfing through a proxy:</b> set your "<b>http_proxy</b>" environment variable to URL of proxy</li>
         <li><b>Custom diff's &amp; flags:</b> set your "<b>DIFF</b>" environment variable (<a href="https://github.com/igrigorik/vimgolf/commit/d69469a93b404c4358b23fc1c4c7556a9563577e">d6946</a>)</li>
+        <li><b>Golfing without ruby installation:</b> <a href="https://github.com/filbranden/vimgolf/pkgs/container/vimgolf">use docker</a><br />
+          <code>docker run --rm -it -e "key=YOUR_VIMGOLF_KEY" ghcr.io/filbranden/vimgolf challenge_ID</code>
+        </li>
+
+
     </ul>
 
     <p><b>Windows users:</b> To compete you will need to make sure that you can launch <b>"vim"</b> from your command prompt. </a>.</p>
@@ -73,7 +85,7 @@
 <div class="grid_5">
  <h3>Getting in touch</h3>
  <ul>
-    <li><b><a href="http://twitter.com/vimgolf">@vimgolf</a></b> on twitter</li>
+    <li><b><a href="https://twitter.com/vimgolf">@vimgolf</a></b> on twitter</li>
     <li><b>#VimGolf</b> on freenode (IRC)</li>
     <li><a href="https://github.com/igrigorik/vimgolf/issues">Open issues on GitHub</a></li>
     <li><a href="https://github.com/igrigorik/vimgolf">CLI source code on Github</a></li>
@@ -82,7 +94,9 @@
  <h3>Moderators</h3>
  <ul>
     <% ADMINS.each do |user| %>
-        <li><%= user %></li>
+      <%- if u = User.find_by_nickname(user) %>
+        <li><%= profile_link(u) %></li>
+      <%- end %>
     <% end %>
  </ul>
 

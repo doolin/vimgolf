@@ -5,14 +5,9 @@
 
 <h3><b>Open VimGolf challenges</b></h3>
 
-<% @challenges.each do |c| %>
-    <div>
-        <h5 class="challenge">
-            <%= link_to c.title, challenge_path(c) %> - <%= @entry_counts[c.id] || 0 %> entries
-        </h5>
-        <p><%= c.description %></p>
-    </div>
-<% end %>
+<%= render partial: "shared/challenge", collection: @challenges, as: :challenge %>
+
+<%= paginate @paginatable_array, inner_window: 20 %>
 
 </div>
 
